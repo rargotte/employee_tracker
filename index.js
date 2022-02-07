@@ -17,7 +17,7 @@ const db = new sqldb(
         host: 'localhost',
         user: 'root',
         // MySQL password
-        password: 'Rek8801853%',
+        password: 'yourpass',
         database: 'company_db'
     },
     console.log(`Connected to the company_db database.`)

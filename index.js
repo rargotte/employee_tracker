@@ -27,17 +27,6 @@ const db = new sqldb(
 /*
 Asynchronous queries to the SQL database
 */
-async function getManagerNames() {
-    let query = "SELECT * FROM employee WHERE manager_id IS NULL";
-    const rows = await db.query(query);
-    //console.log("number of rows returned " + rows.length);
-    let employeeNames = [];
-    for (const employee of rows) {
-        employeeNames.push(employee.first_name + " " + employee.last_name);
-    }
-    return employeeNames;
-}
-
 async function viewAllDepartments() {
     let query = "SELECT * FROM department";
     const rows = await db.query(query);
@@ -85,15 +74,59 @@ async function getDepartmentNames() {
 }
 
 async function getDepartmentId(name) {
-    let query = "SELECT ID FROM department WHERE department.name = ?";
+    let query = "SELECT id FROM department WHERE department.name = ?";
     let args = [name];
     const rows = await db.query(query, args);
-    let departmentId = rows[0].ID;
+    let departmentId = rows[0].id;
     return departmentId;
 }
-    
+
+async function addEmployee() {
+    const newEmployee = await getEmployee();
+    let roleId = await getRoleId(newEmployee.role);
+    let managerId = await getManagerId(newEmployee.manager);
+    let args = [newEmployee.first_name, newEmployee.last_name, roleId, managerId];
+    let query = "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
+    const rows = await db.query(query, args);
+    console.table(rows);
+}
+
+async function getManagerNames() {
+    let query = "SELECT first_name, last_name FROM employee WHERE manager_id is null";
+    const rows = await db.query(query);
+    let managerNames = [];
+    for (const manager of rows) {
+        managerNames.push(manager.last_name + ", " + manager.first_name,);
+    }
+    return managerNames;
+}
+
+async function getRoleTitles() {
+    let query = "SELECT title FROM roles";
+    const rows = await db.query(query);
+    let roleTitles = [];
+    for (const role of rows) {
+        roleTitles.push(role.title);
+    }
+    return roleTitles;
+}
+
+async function getRoleId(role) {
+    let query = "SELECT id FROM roles WHERE roles.title = ?";
+    let args = [role];
+    const rows = await db.query(query, args);
+    let roleId = rows[0].id;
+    return roleId;
+}
 
 
+async function getManagerId(manager) {
+    let query = "SELECT id FROM employee WHERE first_name = ? AND last_name = ?";
+    let fullname = manager.split(", ").reverse();
+    const rows = await db.query(query, fullname);
+    let managerId = rows[0].id;
+    return managerId;
+}
 
 async function mainChoice() {
     return inquirer
@@ -108,7 +141,7 @@ async function mainChoice() {
                     "View all employees",
                     "Add a department",
                     "Add a role",
-                    "Add a employee",
+                    "Add an employee",
                     "Update employee role",
                     "Log out"
                 ]
@@ -140,6 +173,11 @@ async function main() {
             }
             case 'Add a role': {
                 await addRole();
+                break;
+            }
+
+            case 'Add an employee': {
+                await addEmployee();
                 break;
             }
 
@@ -175,8 +213,37 @@ async function getRole() {
             message: "Department: ",
             name: "name",
             choices: departmentNames
-            
 
+
+        }]);
+}
+
+async function getEmployee() {
+    const managerNames = await getManagerNames();
+    const roleTitles = await getRoleTitles();
+    console.log(managerNames);
+    return inquirer
+        .prompt([{
+            message: "First Name: ",
+            name: "first_name"
+        },
+
+        {
+            message: "Last Name: ",
+            name: "last_name"
+        },
+
+        {
+            type: "list",
+            message: "Role: ",
+            name: "role",
+            choices: roleTitles
+        },
+        {
+            type: "list",
+            message: "Manager: ",
+            name: "manager",
+            choices: managerNames
         }]);
 }
 

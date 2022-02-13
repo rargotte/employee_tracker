@@ -17,7 +17,7 @@ const db = new sqldb(
         host: 'localhost',
         user: 'root',
         // MySQL password
-        password: 'mypass',
+        password: 'Rek8801853%',
         database: 'company_db'
     },
     console.log(`Connected to the company_db database.`)
@@ -31,7 +31,6 @@ async function viewAllDepartments() {
     let query = "SELECT department.id, department.name as 'department' FROM department";
     const rows = await db.query(query);
     console.table(rows);
-
 }
 
 
@@ -57,14 +56,14 @@ async function addDepartment() {
 
 async function addRole() {
     const role = await getRole();
-    let departmentId = await getDepartmentId(role.name);
+    let departmentId = await findDepartmentId(role.name);
     let args = [role.title, role.salary, departmentId];
     let query = "INSERT INTO roles (title, salary, department_id) VALUES (?,?,?)";
     const rows = await db.query(query, args);
     console.table(rows);
 }
 
-async function getDepartmentNames() {
+async function findAllDepartmentNames() {
     let query = "SELECT name FROM department";
     const rows = await db.query(query);
     let departmentNames = [];
@@ -75,7 +74,7 @@ async function getDepartmentNames() {
     return departmentNames;
 }
 
-async function getDepartmentId(name) {
+async function findDepartmentId(name) {
     let query = "SELECT id FROM department WHERE department.name = ?";
     let args = [name];
     const rows = await db.query(query, args);
@@ -85,8 +84,8 @@ async function getDepartmentId(name) {
 
 async function addEmployee() {
     const newEmployee = await getEmployee();
-    let roleId = await getRoleId(newEmployee.role);
-    let managerId = await getEmployeeId(newEmployee.manager);
+    let roleId = await findRoleId(newEmployee.role);
+    let managerId = await findEmployeeId(newEmployee.manager);
     let args = [newEmployee.first_name, newEmployee.last_name, roleId, managerId];
     let query = "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
     const rows = await db.query(query, args);
@@ -95,24 +94,25 @@ async function addEmployee() {
 
 async function updateEmployee() {
     const EmployeeToUpdate = await getEmployeeToUpdate();
-    const employeeId = await getEmployeeId(EmployeeToUpdate.fullname)
+    const employeeId = await findEmployeeId(EmployeeToUpdate.fullname)
     const replacingRole = await getEmployeeNewRole(employeeId);
     const replacingManager = await getEmployeeNewManager(employeeId)
-    let roleId = await getRoleId(replacingRole.role);
-    let managerId = await getEmployeeId(replacingManager.fullName)
+    let roleId = await findRoleId(replacingRole.role);
+    let managerId = await findEmployeeId(replacingManager.fullName)
     let args = [roleId, managerId, employeeId];
     let query = "UPDATE employee SET role_id=?, manager_id=? WHERE employee.id=?";
     const rows = await db.query(query, args);
     console.table(rows);
 };
 
-async function getAllManagerFullNames() {
+async function findAllManagerFullNames() {
     let query = "SELECT first_name, last_name FROM employee WHERE manager_id is null";
     const rows = await db.query(query);
     let managerNames = [];
     for (const manager of rows) {
         managerNames.push(manager.last_name + ", " + manager.first_name,);
     }
+    managerNames.push("No Manager");
     return managerNames;
 }
 
@@ -136,7 +136,7 @@ async function findEmployeeFullName(id) {
 }
 
 
-async function findEmployeeNames() {
+async function findAllEmployeeFullNames() {
     let query = "SELECT first_name, last_name FROM employee";
     const rows = await db.query(query);
     let employeeNames = [];
@@ -146,7 +146,7 @@ async function findEmployeeNames() {
     return employeeNames;
 }
 
-async function getRoleTitles() {
+async function findAllRoleTitles() {
     let query = "SELECT title FROM roles";
     const rows = await db.query(query);
     let roleTitles = [];
@@ -156,7 +156,7 @@ async function getRoleTitles() {
     return roleTitles;
 }
 
-async function getRoleId(role) {
+async function findRoleId(role) {
     let query = "SELECT id FROM roles WHERE roles.title = ?";
     let args = [role];
     const rows = await db.query(query, args);
@@ -165,11 +165,12 @@ async function getRoleId(role) {
 }
 
 
-async function getEmployeeId(manager) {
+async function findEmployeeId(fullName) {
+
     let query = "SELECT id FROM employee WHERE first_name = ? AND last_name = ?";
-    console.log(manager);
-    let fullname = manager.split(", ").reverse();
-    const rows = await db.query(query, fullname);
+    let allName = fullName.split(", ").reverse();
+    if (fullName === "No Manager") return null;
+    const rows = await db.query(query, allName);
     let managerId = rows[0].id;
     return managerId;
 }
@@ -245,7 +246,7 @@ async function getDepartment() {
 
 
 async function getRole() {
-    const departmentNames = await getDepartmentNames();
+    const departmentNames = await findAllDepartmentNames();
     return inquirer
         .prompt([{
             message: "Title: ",
@@ -288,7 +289,7 @@ async function getEmployeeNewManager(id) {
     let obj = {
         fullName: currentManagerFullName
     };
-    const managerNames = await getAllManagerFullNames();
+    const managerNames = await findAllManagerFullNames();
     const change = await changeManager();
     if (change.action === 'Yes') {
         return inquirer
@@ -304,8 +305,8 @@ async function getEmployeeNewManager(id) {
 
 
 async function getEmployee() {
-    const managerNames = await getAllManagerFullNames();
-    const roleTitles = await getRoleTitles();
+    const managerNames = await findAllManagerFullNames();
+    const roleTitles = await findAllRoleTitles();
     return inquirer
         .prompt([{
             message: "First Name: ",
@@ -332,7 +333,7 @@ async function getEmployee() {
 }
 
 async function getEmployeeToUpdate() {
-    const employeeNames = await findEmployeeNames()
+    const employeeNames = await findAllEmployeeFullNames()
     return inquirer
         .prompt([{
             type: "list",
@@ -343,7 +344,7 @@ async function getEmployeeToUpdate() {
 }
 
 async function getEmployeeNewRole(id) {
-    const roleTitles = await getRoleTitles();
+    const roleTitles = await findAllRoleTitles();
     return inquirer
         .prompt([{
             type: "list",

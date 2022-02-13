@@ -69,7 +69,6 @@ async function findAllDepartmentNames() {
     for (const department of rows) {
         departmentNames.push(department.name);
     }
-    console.log(departmentNames);
     return departmentNames;
 }
 

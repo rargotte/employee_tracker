@@ -36,6 +36,8 @@ This is a command-line application to manage a company's employee database, usin
   
   # Demo Video
 
+https://user-images.githubusercontent.com/93161922/153738929-b0bbccf3-d3f7-456c-b706-51f6be43ad47.mp4
+
 
 
 

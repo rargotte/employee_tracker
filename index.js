@@ -1,8 +1,6 @@
 const inquirer = require("inquirer");
 
-const employee = require("./lib/Employee");
-const department = require("./lib/Department");
-const role = require("./lib/Role");
+
 let sqldb = require("./async_query");
 const cTable = require("console.table");
 
@@ -10,6 +8,7 @@ const roles = [];
 const departments = [];
 const employees = [];
 
+var exit = false;
 
 // Connect to database
 const db = new sqldb(
@@ -175,6 +174,11 @@ async function findEmployeeId(fullName) {
     return managerId;
 }
 
+async function exitApp() {
+    exit = true;
+    const close = await db.close();
+}
+
 async function mainChoice() {
     return inquirer
         .prompt([
@@ -190,14 +194,14 @@ async function mainChoice() {
                     "Add a role",
                     "Add an employee",
                     "Update an employee role",
+                    "Exit"
                 ]
             }
         ])
 }
 
 async function main() {
-    let done = false;
-    while (!done) {
+    while (!exit) {
         const prompt = await mainChoice();
 
         switch (prompt.action) {
@@ -230,6 +234,11 @@ async function main() {
                 await updateEmployee();
                 break;
             }
+            case 'Exit': {
+                await exitApp();
+                break;
+            }
+
 
         }
     }
